@@ -4,10 +4,10 @@ root = tkinter.Tk()
 root.geometry('900x700')
 
 
-'''Lights being on or off are determined by fill parameters of each ndex number of tuples containing colours. 
+'''Lights being on or off are determined by fill parameters of each index number of tuples containing colours. 
 0 - light is off
 1 - light is on
-Each colour has it's own two-element tuple declared below.
+Each colour has its own two-element tuple declared below.
 '''
 
 green = ('#175700','#3DE500')
@@ -70,7 +70,6 @@ def step_seven():
     TrafficSemaphor.itemconfig(green_traffic, fill=green[1])
     #setting b1 state to clickable again
     b1.config(state="normal")
-    root.after(10000)
     #2.8.Światło zielone dla samochodu gaśnie
 
 b1 = tkinter.Button(text="PRESS\nTHE\nBUTTON", font=30, background='yellow', height=10, width=20, command=step_one)
