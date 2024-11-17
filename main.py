@@ -17,9 +17,9 @@ red = ('#7D0000','#F90000')
 TrafficSemaphor = tkinter.Canvas(height=450, width=200, bg='black')
 TrafficSemaphor.place(x=100, y=100)
 #1a.W normalnym trybie pracy światła dla samochodu są wyłączone, co oznacza to samo, co światło zielone
-green_traffic = TrafficSemaphor.create_oval(50, 25, 150, 125, fill=green[0])
+red_traffic = TrafficSemaphor.create_oval(50, 25, 150, 125, fill=red[0])
 yellow_traffic = TrafficSemaphor.create_oval(50, 175, 150, 275, fill=yellow[0])
-red_traffic = TrafficSemaphor.create_oval(50, 325, 150, 425, fill=red[0])
+green_traffic = TrafficSemaphor.create_oval(50, 325, 150, 425, fill=green[0])
 
 PedestrianSemaphor = tkinter.Canvas(height=300, width=200, bg='black')
 PedestrianSemaphor.place(x=350, y=175)
@@ -82,7 +82,6 @@ def step_six():
 
 #2.7.Dla samochodu załącza się światło zielone (na 10 Sekund)
 def step_seven():
-
     TrafficSemaphor.itemconfig(yellow_traffic, fill=yellow[0])
     TrafficSemaphor.itemconfig(red_traffic, fill=red[0])
     TrafficSemaphor.itemconfig(green_traffic, fill=green[1])
