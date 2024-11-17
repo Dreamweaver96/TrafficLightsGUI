@@ -17,21 +17,38 @@ red = ('#7D0000','#F90000')
 TrafficSemaphor = tkinter.Canvas(height=450, width=200, bg='black')
 TrafficSemaphor.place(x=100, y=100)
 #1a.W normalnym trybie pracy światła dla samochodu są wyłączone, co oznacza to samo, co światło zielone
-green_traffic = TrafficSemaphor.create_oval(50, 25, 150, 125, fill=green[1])
+green_traffic = TrafficSemaphor.create_oval(50, 25, 150, 125, fill=green[0])
 yellow_traffic = TrafficSemaphor.create_oval(50, 175, 150, 275, fill=yellow[0])
 red_traffic = TrafficSemaphor.create_oval(50, 325, 150, 425, fill=red[0])
 
 PedestrianSemaphor = tkinter.Canvas(height=300, width=200, bg='black')
 PedestrianSemaphor.place(x=350, y=175)
 #1b.W normalnym trybie pracy dla pieszego świeci się światło czerwone
-green_pedestrian = PedestrianSemaphor.create_oval(50, 25, 150, 125, fill=green[0])
-red_pedestrian = PedestrianSemaphor.create_oval(50, 175, 150, 275, fill=red[1])
+red_pedestrian = PedestrianSemaphor.create_oval(50, 25, 150, 125, fill=red[0])
+green_pedestrian = PedestrianSemaphor.create_oval(50, 175, 150, 275, fill=green[0])
+
+
+def switch_mode():
+    global b_switch_state
+    if b_switch_state == 'day':
+        b_switch.config(text="LIGHTS MODE:\n NIGHT\n\n PRESS TO SWITCH\nTO DAY MODE", background="blue",fg="yellow")
+        b_switch_state = 'night'
+        b_pedestrian.config(state="disabled")
+    else:
+        b_switch.config(text="LIGHTS MODE:\n DAY\n\n PRESS TO SWITCH\nTO NIGHT MODE", background="green", fg="white")
+        b_switch_state = 'day'
+        b_pedestrian.config(state="normal")
+
 
 #2.Po naciśnięciu przez pieszego przycisku
 # 2.1.Dla samochodu załącza się światło zielone (na 2 Sekundy)
 def step_one():
-    #setting b1 state to disabled to avoid multiple clicks and thus function calls
-    b1.config(state="disabled")
+    global sequence_flag
+    sequence_flag = True
+    # setting b_pedestrian state to disabled to avoid multiple clicks and thus function calls
+    b_pedestrian.config(state="disabled")
+    TrafficSemaphor.itemconfig(green_traffic, fill=green[1])
+    PedestrianSemaphor.itemconfig(red_pedestrian, fill=red[1])
     root.after(2000, step_two)
 
 #2.2.Dla samochodu załącza się światło pomarańczowe (na 2 Sekundy)
@@ -63,16 +80,41 @@ def step_six():
     TrafficSemaphor.itemconfig(yellow_traffic, fill=yellow[1])
     root.after(2000, step_seven)
 
-    #2.7.Dla samochodu załącza się światło zielone (na 10 Sekund)
+#2.7.Dla samochodu załącza się światło zielone (na 10 Sekund)
 def step_seven():
+
     TrafficSemaphor.itemconfig(yellow_traffic, fill=yellow[0])
     TrafficSemaphor.itemconfig(red_traffic, fill=red[0])
     TrafficSemaphor.itemconfig(green_traffic, fill=green[1])
-    #setting b1 state to clickable again
-    b1.config(state="normal")
-    #2.8.Światło zielone dla samochodu gaśnie
+    root.after(10000, step_eight)
 
-b1 = tkinter.Button(text="PRESS\nTHE\nBUTTON", font=30, background='yellow', height=10, width=20, command=step_one)
-b1.place(x=600, y=250)
+def step_eight():
+#2.8.Światło zielone dla samochodu i światło czerwone dla pieszego gaśnie
+    TrafficSemaphor.itemconfig(green_traffic, fill=green[0])
+    PedestrianSemaphor.itemconfig(red_pedestrian, fill=red[0])
+    # setting b_pedestrian state to clickable again
+    b_pedestrian.config(state="normal")
+    global sequence_flag
+    sequence_flag = False
+
+b_switch = tkinter.Button(text="LIGHTS MODE:\n DAY\n\n PRESS TO SWITCH\nTO NIGHT MODE", font=30, fg='white', background='green', height=10, width=20, command=switch_mode)
+b_switch.place(x=600, y=50)
+#default state of the b_switch button
+b_switch_state = 'day'
+
+
+b_pedestrian = tkinter.Button(text="PRESS\nTHE\nBUTTON", font=30, background='yellow', height=10, width=20, command=step_one)
+b_pedestrian.place(x=600, y=250)
+
+#sequence flag checks if the daylight sequence is being executed
+sequence_flag = False
+def night_lights():
+    global b_switch_state, sequence_flag, TrafficSemaphor
+    if b_switch_state == 'night':
+        if sequence_flag == False:
+            TrafficSemaphor.itemconfig(yellow_traffic, fill=yellow[1])
+            root.after(500, lambda: TrafficSemaphor.itemconfig(yellow_traffic, fill=yellow[0]))
+    root.after(1000,night_lights)
+night_lights()
 
 root.mainloop()
