@@ -2,6 +2,8 @@ import tkinter
 
 root = tkinter.Tk()
 root.geometry('900x700')
+root.minsize(900, 700)
+root.maxsize(900, 700)
 
 '''Lights being on or off are determined by fill parameters of each index number of tuples containing colours. 
 0 - light is off
