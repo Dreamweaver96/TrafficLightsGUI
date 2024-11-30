@@ -101,6 +101,7 @@ def night_lights_cycle():
     global step_day
     global work_mode
     if work_mode != 'night':
+        b_pedestrian.config(state="active")
         step_night = 0
         step_day = 7
         work_mode = 'night'
@@ -113,7 +114,7 @@ def day_lights_cycle():
     global step_day
     global step_night
     global work_mode
-    if work_mode != 'day':
+    if work_mode != 'day' or step_day == 0:
         step_day = 0
         step_night = 2
         work_mode = 'day'
@@ -125,6 +126,7 @@ def day_lights():
     print(f"Timer tick,step_day = {step_day}")
     match step_day:
         case 0:
+            quit()
             config_semaphors_traffic('green')
             config_semaphors_pedestrian('red')
         case 1:
