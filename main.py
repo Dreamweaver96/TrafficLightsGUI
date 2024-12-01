@@ -1,4 +1,8 @@
 import tkinter
+from _datetime import datetime
+import threading
+import tkinter as tk
+from tkinter import messagebox
 
 root = tkinter.Tk()
 root.geometry('900x700')
@@ -13,112 +17,167 @@ Each colour has its own two-element tuple declared below.
 green = ('#175700','#3DE500')
 yellow = ('#957700','#F9C700')
 red = ('#7D0000','#F90000')
+step_day = 0
+step_night = 0
 
-#1.In normal operation mode, all lights are turned off.
+lights_state_day = ('green', 'yellow', 'red', 'red yellow', 'off')
+lights_state_night = ('yellow', 'off')
+lights_interval_day = (2000, 2000, 2000, 10000, 2000, 2000)
+lights_interval_night = (500, 500)
+work_mode = ('day','night')
+
 TrafficSemaphor = tkinter.Canvas(height=450, width=200, bg='black')
 TrafficSemaphor.place(x=100, y=100)
 
 red_traffic = TrafficSemaphor.create_oval(50, 25, 150, 125, fill=red[0])
 yellow_traffic = TrafficSemaphor.create_oval(50, 175, 150, 275, fill=yellow[0])
-green_traffic = TrafficSemaphor.create_oval(50, 325, 150, 425, fill=green[0])
+green_traffic = TrafficSemaphor.create_oval(50, 325, 150, 425, fill=green[1])
 
 PedestrianSemaphor = tkinter.Canvas(height=300, width=200, bg='black')
 PedestrianSemaphor.place(x=350, y=175)
-red_pedestrian = PedestrianSemaphor.create_oval(50, 25, 150, 125, fill=red[0])
+red_pedestrian = PedestrianSemaphor.create_oval(50, 25, 150, 125, fill=red[1])
 green_pedestrian = PedestrianSemaphor.create_oval(50, 175, 150, 275, fill=green[0])
 
+def config_semaphors_traffic(state):
+    match state:
+        case 'green':
+            TrafficSemaphor.itemconfig(red_traffic, fill=red[0])
+            TrafficSemaphor.itemconfig(yellow_traffic, fill=yellow[0])
+            TrafficSemaphor.itemconfig(green_traffic, fill=green[1])
 
-def switch_mode():
-    global b_switch_state, sequence_flag
-    if b_switch_state == 'day':
-        b_switch.config(text="LIGHTS MODE:\n NIGHT\n\n PRESS TO SWITCH\nTO DAY MODE", background="blue",fg="yellow")
-        b_switch_state = 'night'
-        b_pedestrian.config(state="disabled")
+        case 'yellow':
+            TrafficSemaphor.itemconfig(red_traffic, fill=red[0])
+            TrafficSemaphor.itemconfig(yellow_traffic, fill=yellow[1])
+            TrafficSemaphor.itemconfig(green_traffic, fill=green[0])
+
+        case 'red':
+            TrafficSemaphor.itemconfig(red_traffic, fill=red[1])
+            TrafficSemaphor.itemconfig(yellow_traffic, fill=yellow[0])
+            TrafficSemaphor.itemconfig(green_traffic, fill=green[0])
+
+        case 'red yellow':
+            TrafficSemaphor.itemconfig(red_traffic, fill=red[1])
+            TrafficSemaphor.itemconfig(yellow_traffic, fill=yellow[1])
+            TrafficSemaphor.itemconfig(green_traffic, fill=green[0])
+
+        case 'off':
+            TrafficSemaphor.itemconfig(red_traffic, fill=red[0])
+            TrafficSemaphor.itemconfig(yellow_traffic, fill=yellow[0])
+            TrafficSemaphor.itemconfig(green_traffic, fill=green[0])
+
+        case _:
+            TrafficSemaphor.itemconfig(red_traffic, fill=red[0])
+            TrafficSemaphor.itemconfig(yellow_traffic, fill=yellow[0])
+            TrafficSemaphor.itemconfig(green_traffic, fill=green[0])
+
+def config_semaphors_pedestrian(state):
+    match state:
+        case 'red':
+            PedestrianSemaphor.itemconfig(red_pedestrian, fill=red[1])
+            PedestrianSemaphor.itemconfig(green_pedestrian, fill=green[0])
+
+        case 'green':
+            PedestrianSemaphor.itemconfig(red_pedestrian, fill=red[0])
+            PedestrianSemaphor.itemconfig(green_pedestrian, fill=green[1])
+
+        case 'off':
+            PedestrianSemaphor.itemconfig(red_pedestrian, fill=red[0])
+            PedestrianSemaphor.itemconfig(green_pedestrian, fill=green[0])
+
+        case _:
+            PedestrianSemaphor.itemconfig(red_pedestrian, fill=red[0])
+            PedestrianSemaphor.itemconfig(green_pedestrian, fill=green[0])
+
+def check_work_mode():
+    current_time = datetime.now().time()
+    current_time = datetime(2024,11,25,5,23,21)
+    if current_time.hour >= 22 or current_time.hour <= 6:
+        return work_mode[0]
     else:
-        b_switch.config(text="LIGHTS MODE:\n DAY\n\n PRESS TO SWITCH\nTO NIGHT MODE", background="green", fg="white")
-        b_switch_state = 'day'
-        if sequence_flag == False:
-            b_pedestrian.config(state="normal")
+        return work_mode[1]
 
+def night_lights_cycle():
+    global step_night
+    global step_day
+    global work_mode
+    if work_mode != 'night':
+        b_pedestrian.config(state="active")
+        step_night = 0
+        step_day = 7
+        work_mode = 'night'
+        night_lights()
 
-#2. After the pedestrian presses the button:
-#2.1. The green light for cars turns on, and the red light for pedestrians turns on (for 2 seconds).
-
-def step_one():
-    global sequence_flag
-    sequence_flag = True
-    # setting b_pedestrian state to disabled to avoid multiple clicks and thus function calls
-    b_pedestrian.config(state="disabled")
-    TrafficSemaphor.itemconfig(green_traffic, fill=green[1])
-    PedestrianSemaphor.itemconfig(red_pedestrian, fill=red[1])
-    root.after(2000, step_two)
-
-#2.2. The orange light for cars turns on (for 2 seconds)
-def step_two():
-    TrafficSemaphor.itemconfig(green_traffic, fill=green[0])
-    TrafficSemaphor.itemconfig(yellow_traffic, fill=yellow[1])
-    root.after(2000, step_three)
-
-#2.3. The red light for cars turns on (for 2 seconds).
-def step_three():
-    TrafficSemaphor.itemconfig(yellow_traffic, fill=yellow[0])
-    TrafficSemaphor.itemconfig(red_traffic, fill=red[1])
-    root.after(2000, step_four)
-
-#2.4. The green light for pedestrians turns on (for 10 seconds) simultaneously with the red light for cars.
-def step_four():
-    PedestrianSemaphor.itemconfig(red_pedestrian, fill=red[0])
-    PedestrianSemaphor.itemconfig(green_pedestrian, fill=green[1])
-    root.after(10000, step_five)
-
-#2.5. The red light for pedestrians turns on (for 2 seconds).
-def step_five():
-    PedestrianSemaphor.itemconfig(green_pedestrian, fill=green[0])
-    PedestrianSemaphor.itemconfig(red_pedestrian, fill=red[1])
-    root.after(2000,step_six)
-
-#2.6. The red and orange lights for cars turn on (for 2 seconds).
-def step_six():
-    TrafficSemaphor.itemconfig(yellow_traffic, fill=yellow[1])
-    root.after(2000, step_seven)
-
-#2.7. The green light for cars turns on (for 10 seconds).
-def step_seven():
-    TrafficSemaphor.itemconfig(yellow_traffic, fill=yellow[0])
-    TrafficSemaphor.itemconfig(red_traffic, fill=red[0])
-    TrafficSemaphor.itemconfig(green_traffic, fill=green[1])
-    root.after(10000, step_eight)
-
-def step_eight():
-#2.8. Both the green light for cars and the red light for pedestrians turn off.
-    TrafficSemaphor.itemconfig(green_traffic, fill=green[0])
-    PedestrianSemaphor.itemconfig(red_pedestrian, fill=red[0])
-    global sequence_flag
-    sequence_flag = False
-    global b_switch_state
-    # setting b_pedestrian state to clickable again as the sequence ends. If block is necessary to block enabling in night mode.
-    if b_switch_state == "day":
-        b_pedestrian.config(state="normal")
-
-
-b_switch = tkinter.Button(text="LIGHTS MODE:\n DAY\n\n PRESS TO SWITCH\nTO NIGHT MODE", font=30, fg='white', background='green', height=10, width=20, command=switch_mode)
+b_switch = tkinter.Button(text="LIGHTS MODE:\n DAY\n\n PRESS TO SWITCH\nTO NIGHT MODE", font=30, fg='white', background='green', height=10, width=20, command=night_lights_cycle)
 b_switch.place(x=600, y=50)
-#default state of the b_switch button
-b_switch_state = 'day'
 
+def day_lights_cycle():
+    global step_day
+    global step_night
+    global work_mode
+    if work_mode != 'day' or step_day == 0:
+        step_day = 0
+        step_night = 2
+        work_mode = 'day'
+        day_lights()
 
-b_pedestrian = tkinter.Button(text="PRESS\nTHE\nBUTTON", font=30, background='yellow', height=10, width=20, command=step_one)
+def day_lights():
+    global step_day
+    print(f"Timer tick,step_day = {step_day}")
+    match step_day:
+        case 0:
+            config_semaphors_traffic('green')
+            config_semaphors_pedestrian('red')
+        case 1:
+            config_semaphors_traffic('yellow')
+            config_semaphors_pedestrian('red')
+        case 2:
+            config_semaphors_traffic('red')
+            config_semaphors_pedestrian('red')
+        case 3:
+            config_semaphors_traffic('red')
+            config_semaphors_pedestrian('green')
+        case 4:
+            config_semaphors_traffic('red')
+            config_semaphors_pedestrian('red')
+        case 5:
+            config_semaphors_traffic('red yellow')
+            config_semaphors_pedestrian('red')
+        case 6:
+            config_semaphors_traffic('green')
+            config_semaphors_pedestrian('red')
+
+    if step_day > 5:
+        b_pedestrian.config(state="active")
+        step_day = 0
+    else:
+        root.after(lights_interval_day[step_day], day_lights)
+        step_day = step_day + 1
+
+b_pedestrian = tkinter.Button(text="PRESS\nTHE\nBUTTON", font=30, background='yellow', height=10, width=20, command = day_lights_cycle)
 b_pedestrian.place(x=600, y=250)
 
 #sequence flag checks if the daylight sequence is being executed
 sequence_flag = False
 def night_lights():
-    global b_switch_state, sequence_flag
-    if b_switch_state == 'night':
-        if sequence_flag == False:
-            TrafficSemaphor.itemconfig(yellow_traffic, fill=yellow[1])
-            root.after(500, lambda: TrafficSemaphor.itemconfig(yellow_traffic, fill=yellow[0]))
-    root.after(1000,night_lights)
-night_lights()
+    global step_night
+    print(f"Timer tick,step_night = {step_night}")
+    match step_night:
+        case 0:
+            config_semaphors_traffic('yellow')
+            config_semaphors_pedestrian('off')
+            root.after(lights_interval_night[step_night], night_lights)
+            step_night = 1
+        case 1:
+            config_semaphors_traffic('off')
+            config_semaphors_pedestrian('off')
+            root.after(lights_interval_night[step_night], night_lights)
+            step_night = 0
 
+def on_closing():
+    """Handle the window close event."""
+    if messagebox.askokcancel("Quit", "Do you want to quit?"):
+        stop_thread = True
+        root.destroy()  # Close the window
+
+root.protocol("WM_DELETE_WINDOW", on_closing)
 root.mainloop()
