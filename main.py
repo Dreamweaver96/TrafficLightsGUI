@@ -122,11 +122,9 @@ def day_lights_cycle():
 
 def day_lights():
     global step_day
-    b_pedestrian.config(state="disabled")
     print(f"Timer tick,step_day = {step_day}")
     match step_day:
         case 0:
-            quit()
             config_semaphors_traffic('green')
             config_semaphors_pedestrian('red')
         case 1:
